@@ -1,0 +1,128 @@
+namespace Lab_1_Mictrosoft_ver_1
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        int t0 = 0;
+        double T = 1;
+        double u0 = 3;
+        double eps = 0.001;
+        
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+        public double Function(double t,double u)
+        {
+            double F = -t * u - Math.Pow(t, 3);
+            //double F = u / t - 2 / (t * t);
+            return F;
+        }
+        public double RungeCutm4(double t,double u,double tau)
+        {
+            double tn = t;
+            double yn = u;
+            double K1 = Function(tn, yn);
+            double K2 = Function(tn + tau / 2, yn + tau / 2 * K1);
+            double K3 = Function(tn + tau / 2, yn + tau / 2 * K2);
+            double K4 = Function(tn + tau, yn + tau * K3);
+            double ynp1 = yn + tau / 6 * (K1 + 2 * K2 + 2 * K3 + K4);
+            return ynp1;
+        }
+        public double Pogre()
+        {
+            double Llast = 0;
+            double L = 0;
+            double N = 10;
+            double tau = (T - t0) / N;
+            List<double> yottau = new List<double>();
+            List<double> yottau1 = new List<double>();
+            List<double> tn1 = new List<double>();
+            List<double> tn2 = new List<double>();
+            List<double> lastz = new List<double>();
+            List<double> lastz1 = new List<double>();
+            List<double> psi = new List<double>();
+            List<double> xl = new List<double>();
+            double yn = u0;
+            double ynp1 = 0;
+            for (int j = 0; j < 10; j++)
+            {
+                yottau.Clear();
+                yottau1.Clear();
+                tn1.Clear();
+                tn2.Clear();
+                yn = u0;
+                ynp1 = 0;
+                for (int i = t0; i < N+1; i++)
+                {
+                    ynp1 = RungeCutm4(i * tau, yn, tau);
+                    yottau.Add(ynp1);
+                    yn = ynp1;
+                    tn1.Add(i * tau);
+                   
+                }
+                lastz.Add(yottau.Last());
+                xl.Add(tau);
+                N = N * 2;
+                tau = (T - t0) / N;
+                yn = u0;
+                ynp1 = 0;
+                for (int i = t0; i < N+1; i++)
+                {
+                    ynp1 = RungeCutm4(i * tau, yn, tau);
+                    yottau1.Add(ynp1);
+                    yn = ynp1;
+                    tn2.Add(i * tau);
+                }
+                lastz1.Add(yottau1.Last());
+                L++;
+                if (Math.Abs((yottau.Last() - yottau1.Last()) / yottau1.Last()) <= (Math.Pow(2, 4) - 2) / 2 * eps)
+                {
+                    Llast = L;
+                    break;
+                 
+                }
+              
+            }
+            var scatter1 = formsPlot1.Plot.Add.Scatter(tn1, yottau);
+            formsPlot1.Plot.Axes.AutoScale();
+            formsPlot1.Refresh();
+            textBox2.Text = $"L= {Llast}";
+            textBox3.Text = $"N= {N/2}";
+
+            for(int i=0;i< lastz.Count-1; i++)
+            {
+
+                psi.Add(Math.Abs((lastz[i] - lastz1.Last()) / lastz1.Last()));
+            }
+            double xz = 0;
+            double x = 0;
+            double z = 0;
+            double xkv = 0;
+            for (int i = 0; i < Llast - 1; i++)
+            {
+
+                xz = xz + Math.Log(xl[i]) + Math.Log(psi[i]);
+                x=x+ Math.Log(xl[i]);
+                z = z + Math.Log(psi[i]);
+                xkv = xkv + Math.Pow(Math.Log(xl[i]), 2);
+
+            }
+            double A = ((Llast - 1) *xz - x * z) / ((Llast - 1) * xkv - Math.Pow(x, 2));
+
+            return 0;
+        }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Pogre();
+        }
+    }
+}
